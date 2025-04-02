@@ -187,7 +187,7 @@ for query in [create_blocked_users, create_groups_table, create_users_table, cre
 
 # ==================== Глобальні змінні та клавіатури ====================
 main_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-main_markup.add(KeyboardButton("/my_id"), KeyboardButton("/server_control"))
+main_markup.add(KeyboardButton("мій айді"), KeyboardButton("керування сервером"))
 
 qr_message_id = {}
 admin_qr_msg_id = {}
