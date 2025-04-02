@@ -425,11 +425,13 @@ def process_unblock_2fa(message):
         admin_secret = res[0]
     else:
         bot.send_message(message.chat.id, "Не знайдено ваш секретний ключ для 2FA.")
+        send_commands_menu(message)
         pending_unblock.pop(admin_id, None)
         return
     totp = pyotp.TOTP(admin_secret)
     if not totp.verify(message.text.strip()):
         bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
+        send_commands_menu(message)
         pending_unblock.pop(admin_id, None)
         return
     unblock_user_id = pending_unblock.pop(admin_id)
@@ -440,8 +442,10 @@ def process_unblock_2fa(message):
         wrong_attempts.pop(unblock_user_id, None)
         logging.info(f"Користувача {unblock_user_id} ({nickname}) розблоковано адміністратором {admin_id}.")
         bot.send_message(message.chat.id, f"Користувача {nickname} (ID: {unblock_user_id}) успішно розблоковано.")
+        send_commands_menu(message)
     else:
         bot.send_message(message.chat.id, "Користувача з таким ID не знайдено у списку заблокованих.")
+        send_commands_menu(message)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "змінити групу")
 @moderator_only
@@ -449,6 +453,7 @@ def switch_group(message):
     groups = execute_db("SELECT group_name FROM groups_for_hetzner", fetchone=False)
     if not groups:
         bot.send_message(message.chat.id, "Немає доступних груп для перемикання.")
+        send_commands_menu(message)
         return
     markup = InlineKeyboardMarkup()
     for group in groups:
@@ -466,6 +471,7 @@ def confirm_switch_group(call):
         admin_secret = res[0]
     else:
         bot.send_message(call.message.chat.id, "Ваш секретний ключ для 2FA не знайдено.")
+        send_commands_menu(call)
         return
     bot.send_message(call.message.chat.id, "Введіть 2FA-код для підтвердження зміни групи:")
     bot.register_next_step_handler(call.message, verify_switch_group_2fa, new_group, user_id, call.message.message_id)
@@ -475,12 +481,14 @@ def verify_switch_group_2fa(message, new_group, user_id, msg_id):
     res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(user_id),), fetchone=True)
     if not res:
         bot.send_message(message.chat.id, "Не знайдено секретного ключа для 2FA.")
+        send_commands_menu(message)
         return
     admin_secret = res[0]
 
     totp = pyotp.TOTP(admin_secret)
     if not totp.verify(message.text.strip()):
         bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
+        send_commands_menu(message)
         return
 
     try:
@@ -502,9 +510,11 @@ def verify_switch_group_2fa(message, new_group, user_id, msg_id):
         update_users_cache()
 
         bot.send_message(message.chat.id, f"✅ Ви тепер працюєте в групі '{new_group}'")
+        send_commands_menu(message)
 
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Помилка оновлення даних: {str(e)}")
+        send_commands_menu(message)
         return
 
     try:
@@ -522,20 +532,10 @@ def add_moderator_standart(message):
 
     except Exception as err:
         bot.send_message(message.chat.id, f"❌ Помилка: {err}")
+        send_commands_menu(message)
 
 
-def verify_clear_users(message, secret):
-    totp = pyotp.TOTP(secret)
-    if totp.verify(message.text.strip()):
-        try:
-            execute_db("DELETE FROM users", commit=True)
-            update_users_cache()
-            bot.reply_to(message, "Усі користувачі видалені.")
-            send_commands_menu(message)
-        except Exception as err:
-            bot.reply_to(message, f"Помилка: {err}")
-    else:
-        bot.send_message(message.chat.id, "❌ Невірний код. Операція скасована.")
+
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "створити одноразовий код")
 @moderator_only
@@ -543,6 +543,7 @@ def create_time_key(message):
     res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(message.from_user.id),), fetchone=True)
     if not res:
         bot.send_message(message.chat.id, "Ваш секретний ключ для 2FA не знайдено.")
+        send_commands_menu(message)
         return
     secret = res[0]
     bot.send_message(message.chat.id, "Введіть код 2FA для генерації одноразового коду:")
@@ -564,6 +565,7 @@ def verify_create_time_key_2fa(message, secret):
         bot.send_message(message.chat.id, "Оберіть групу:", reply_markup=markup)
     else:
         bot.send_message(message.chat.id, "❌ Невірний код 2FA. Операція скасована.")
+        send_commands_menu(message)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("create_time_key:"))
 @moderator_callback_only
@@ -580,39 +582,10 @@ def callback_create_time_key(call):
         execute_db("INSERT INTO time_key (group_name, time_key) VALUES (%s, %s)", (group_name, one_key), commit=True)
         bot.answer_callback_query(call.id, f"Одноразовий код для групи '{group_name}' згенеровано!")
         bot.send_message(call.message.chat.id, f"Одноразовий код для групи '{group_name}':\n{one_key}")
+        send_commands_menu(call)
     except Exception as err:
         bot.send_message(call.message.chat.id, f"Помилка генерації коду: {err}")
-
-@bot.message_handler(commands=["stop_bot"])
-@moderator_only
-def stop_bot(message):
-    res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(message.from_user.id),), fetchone=True)
-    if not res:
-        bot.send_message(message.chat.id, "Не знайдено секретного ключа для 2FA.")
-        return
-    secret = res[0]
-    bot.send_message(message.chat.id, "Введіть код 2FA для зупинки бота:")
-    bot.register_next_step_handler(message, verify_stop_bot, secret)
-
-def verify_stop_bot(message, secret):
-    totp = pyotp.TOTP(secret)
-    if totp.verify(message.text.strip()):
-        bot.send_message(message.chat.id, "✅ Код підтверджено! Зупиняємо бота.")
-        do_stop_bot(message)
-    else:
-        bot.send_message(message.chat.id, "❌ Невірний код. Операція скасована.")
-
-def do_stop_bot(message):
-    try:
-        execute_db("ALTER TABLE users DROP FOREIGN KEY users_ibfk_1;", commit=True)
-        execute_db("ALTER TABLE time_key DROP FOREIGN KEY time_key_ibfk_1;", commit=True)
-    except Exception as e:
-        print("Попередження при видаленні зовнішніх ключів:", e)
-    tables = ["admins_2fa", "users", "groups_for_hetzner", "time_key", "pending_admins", "hetzner_servers"]
-    for table in tables:
-        execute_db(f"DROP TABLE IF EXISTS {table};", commit=True)
-    bot.send_message(message.chat.id, "Бувайте! Бот зупинено.")
-    bot.stop_polling()
+        send_commands_menu(call)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "створити групу")
 @moderator_only
@@ -620,6 +593,7 @@ def create_group(message):
     res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(message.from_user.id),), fetchone=True)
     if not res:
         bot.send_message(message.chat.id, "Ваш секретний ключ для 2FA не знайдено.")
+        send_commands_menu(message)
         return
     secret = res[0]
     bot.send_message(message.chat.id, "Введіть код 2FA для створення групи:")
@@ -632,6 +606,7 @@ def verify_create_group(message, secret):
         bot.register_next_step_handler(message, process_add_group)
     else:
         bot.send_message(message.chat.id, "❌ Невірний код. Операція скасована.")
+        send_commands_menu(message)
 
 def process_add_group(message):
     group_name = message.text.strip()
@@ -657,6 +632,7 @@ def process_group_signature(message):
         send_commands_menu(message)
     except Exception as err:
         bot.send_message(message.chat.id, f"❌ Помилка створення групи: {err}")
+        send_commands_menu(message)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "добавити модератора")
 @moderator_only
@@ -672,6 +648,7 @@ def process_add_moderator(message):
         send_commands_menu(message)
     except Exception as err:
         bot.send_message(message.chat.id, f"❌ Помилка додавання модератора: {err}")
+        send_commands_menu(message)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "список груп")
 @moderator_only
@@ -679,6 +656,7 @@ def list_groups(message):
     groups = execute_db("SELECT group_name, group_signature FROM groups_for_hetzner", fetchone=False)
     if not groups:
         bot.send_message(message.chat.id, "Немає створених груп.")
+        send_commands_menu(message)
         return
     for group in groups:
         group_name, group_signature = group
@@ -732,11 +710,13 @@ def process_deletion_2fa(message):
     res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(message.from_user.id),), fetchone=True)
     if not res:
         bot.send_message(message.chat.id, "Не знайдено ваш секретний ключ для 2FA.")
+        send_commands_menu(message)
         return
     user_secret = res[0]
     totp = pyotp.TOTP(user_secret)
     if not totp.verify(message.text.strip()):
         bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
+        send_commands_menu(message)
         return
     group_name = info["group"]
     chat_id = info["chat_id"]
@@ -744,6 +724,7 @@ def process_deletion_2fa(message):
         participants = execute_db("SELECT user_id, username FROM users WHERE group_name = %s", (group_name,), fetchone=False)
         if not participants:
             bot.send_message(chat_id, f"Немає учасників для видалення у групі {group_name}.")
+            send_commands_menu(message)
             return
         markup = InlineKeyboardMarkup()
         for p in participants:
@@ -754,6 +735,7 @@ def process_deletion_2fa(message):
         servers = execute_db("SELECT server_id, server_name FROM hetzner_servers WHERE group_name = %s", (group_name,), fetchone=False)
         if not servers:
             bot.send_message(chat_id, f"Немає серверів для видалення у групі {group_name}.")
+            send_commands_menu(message)
             return
         markup = InlineKeyboardMarkup()
         for s in servers:
@@ -773,8 +755,10 @@ def confirm_delete_user_callback(call):
         update_users_cache()
         bot.answer_callback_query(call.id, f"Користувача з ID {user_id} видалено.")
         bot.send_message(call.message.chat.id, f"Користувача з ID {user_id} видалено з групи {group_name}.")
+        send_commands_menu(call)
     except Exception as err:
         bot.send_message(call.message.chat.id, f"❌ Помилка видалення користувача: {err}")
+        send_commands_menu(call)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("confirm_delete_server:"))
 @moderator_callback_only
@@ -786,8 +770,10 @@ def confirm_delete_server_callback(call):
         execute_db("DELETE FROM hetzner_servers WHERE server_id = %s AND group_name = %s", (server_id, group_name), commit=True)
         bot.answer_callback_query(call.id, f"Сервер з ID {server_id} видалено.")
         bot.send_message(call.message.chat.id, f"Сервер з ID {server_id} видалено з групи {group_name}.")
+        send_commands_menu(call)
     except Exception as err:
         bot.send_message(call.message.chat.id, f"❌ Помилка видалення сервера: {err}")
+        send_commands_menu(call)
 
 @bot.message_handler(commands=["register_admin"])
 def register_admin(message):
@@ -837,6 +823,7 @@ def verify_admin_2fa(message, secret):
             bot.send_message(message.chat.id, f"❌ Помилка реєстрації: {err}")
         try:
             bot.delete_message(message.chat.id, admin_qr_msg_id[message.chat.id])
+            send_commands_menu(message)
         except Exception as e:
             print(f"Помилка при видаленні QR-коду: {e}")
         try:
@@ -845,6 +832,7 @@ def verify_admin_2fa(message, secret):
             print(f"Помилка при видаленні секретного коду: {e}")
     else:
         bot.send_message(message.chat.id, "❌ Невірний код. Будь ласка, спробуйте ще раз.")
+
         bot.register_next_step_handler(message, verify_admin_2fa, secret)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "керування модераторами")
@@ -891,6 +879,7 @@ def verify_remove_moderator(message, mod_id):
             send_commands_menu(message)
         except Exception as err:
             bot.send_message(chat_id, f"❌ Помилка видалення модератора: {err}")
+            send_commands_menu(message)
     else:
         bot.send_message(chat_id, "❌ Невірний 2FA-код. Операцію скасовано.")
     pending_removals.pop(str(chat_id), None)
@@ -904,10 +893,12 @@ def server_control(message):
     group_name = group_result[0] if group_result else None
     if not group_name:
         bot.send_message(message.chat.id, "Ви не зареєстровані або не прив'язані до групи.")
+        send_commands_menu(message)
         return
     servers = execute_db("SELECT server_id, server_name FROM hetzner_servers WHERE group_name = %s", (group_name,), fetchone=False)
     if not servers:
         bot.send_message(message.chat.id, "Для вашої групи немає доданих серверів.")
+        send_commands_menu(message)
         return
     markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     for server in servers:
@@ -931,6 +922,7 @@ def process_server_selection(message):
             break
     if not chosen_server:
         bot.send_message(message.chat.id, "Сервер не знайдено. Спробуйте ще раз.")
+        send_commands_menu(message)
         return
     selected_server[message.chat.id] = chosen_server
     action_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
@@ -944,12 +936,13 @@ def process_server_action(message):
     group_result = execute_db("SELECT group_name FROM users WHERE user_id = %s", (str(user_id),), fetchone=True)
     group_name = group_result[0] if group_result else None
     action = message.text.strip()
-    if action not in ["Увімкнути", "Вимкнути", "Перезавантажити", "Перевірити статус"]:
+    if action not in ["Увімкнути", "Вимкнути", "Перезавантажити", "Перевірити статус" "Меню"]:
         bot.send_message(message.chat.id, "Невідома дія. Операцію скасовано.")
         return
     server_id = selected_server.get(message.chat.id)
     if not server_id:
         bot.send_message(message.chat.id, "Сервер не вибрано. Спробуйте знову.")
+        send_commands_menu(message)
         return
     hetzner_key_result = execute_db("SELECT key_hetzner FROM groups_for_hetzner WHERE group_name = %s", (group_name,), fetchone=True)
     hetzner_key = hetzner_key_result[0] if hetzner_key_result else None
@@ -976,6 +969,7 @@ def process_server_action(message):
             bot.send_message(message.chat.id, "Оберіть опцію:", reply_markup=main_markup)
         else:
             bot.send_message(message.chat.id, f"❌ Помилка: {res.text}")
+            send_commands_menu(message)
 
     else:
         bot.send_message(message.chat.id, "Введіть 2FA-код для підтвердження операції:")
@@ -1006,6 +1000,8 @@ def confirm_server_action_2fa(message, action, server_id, group_name, hetzner_ke
     elif action == "Перезавантажити":
         url = f"{base_url}/{server_id}/actions/reboot"
         res = requests.post(url, headers=headers)
+    elif action == "Меню":
+        send_commands_menu(message)
     else:
         bot.send_message(message.chat.id, "Невідома дія.")
         return
@@ -1031,6 +1027,7 @@ def add_server(message):
     groups = execute_db("SELECT group_name, group_signature FROM groups_for_hetzner", fetchone=False)
     if not groups:
         bot.send_message(message.chat.id, "Немає створених груп.")
+        send_commands_menu(message)
         return
     markup = InlineKeyboardMarkup()
     for group in groups:
@@ -1067,6 +1064,7 @@ def process_server_name(message, group_name, server_id):
         send_commands_menu(message)
     except Exception as err:
         bot.send_message(message.chat.id, f"❌ Помилка при додаванні сервера: {err}")
+        send_commands_menu(message)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "список одноразових кодів")
 @moderator_only
@@ -1121,6 +1119,7 @@ def delete_group(message):
     groups = execute_db("SELECT group_name, group_signature FROM groups_for_hetzner", fetchone=False)
     if not groups:
         bot.send_message(message.chat.id, "Немає доступних груп.")
+        send_commands_menu(message)
         return
 
     markup = InlineKeyboardMarkup()
@@ -1177,13 +1176,16 @@ def verify_group_deletion_2fa(message):
                 commit=True
             )
             bot.send_message(message.chat.id, f"✅ Група '{group_name}' та всі пов'язані дані видалені!")
+            send_commands_menu(message)
             update_users_cache()
 
         except Exception as err:
             bot.send_message(message.chat.id, f"❌ Помилка бази даних: {err}")
+            send_commands_menu(message)
 
     else:
         bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
+        send_commands_menu(message)
 
     # Очищаємо тимчасові дані
     pending_group_deletion.pop(user_id, None)
