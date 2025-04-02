@@ -932,6 +932,7 @@ def process_server_selection(message):
     bot.send_message(message.chat.id, "Оберіть дію для сервера:", reply_markup=action_markup)
     bot.register_next_step_handler(message, process_server_action)
 
+
 def process_server_action(message):
     user_id = message.from_user.id
     group_result = execute_db("SELECT group_name FROM users WHERE user_id = %s", (str(user_id),), fetchone=True)
