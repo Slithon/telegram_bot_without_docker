@@ -939,6 +939,9 @@ def process_server_action(message):
     group_result = execute_db("SELECT group_name FROM users WHERE user_id = %s", (str(user_id),), fetchone=True)
     group_name = group_result[0] if group_result else None
     action = message.text.strip()
+    if action == "Меню" :
+        send_commands_menu(message)
+        return
     if action not in ["Увімкнути", "Вимкнути", "Перезавантажити", "Перевірити статус", "Меню"]:
         bot.send_message(message.chat.id, "Невідома дія. Операцію скасовано.")
         return
