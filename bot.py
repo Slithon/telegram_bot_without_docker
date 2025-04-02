@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS users (
     group_name VARCHAR(255) NOT NULL,
     secret_key VARCHAR(255) NOT NULL,
     PRIMARY KEY (user_id),
-    FOREIGN KEY (group_name) REFERENCES groups_for_hetzner(group_name)
+    FOREIGN KEY (group_name) REFERENCES groups_for_hetzner(group_name) ON DELETE CASCADE
 );
 """
 create_time_secret_key = """
@@ -201,6 +201,7 @@ wrong_attempts = {}
 pending_unblock = {}
 users_cache = set()
 admins_cache = set()
+pending_group_deletion = {}
 
 # ==================== Функції перевірки прав доступу ====================
 def update_users_cache():
@@ -253,6 +254,7 @@ def send_commands_menu_gruo(message):
         "створити групу",
         "змінити групу",
         "список груп",
+        "видалити групу",
         "повернутися назад"
     ]
 
@@ -1064,6 +1066,80 @@ def delete_time_key_callback(call):
     except Exception as err:
         bot.send_message(call.message.chat.id, f"❌ Помилка видалення коду: {err}")
         send_commands_menu(call)
+
+
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "видалити групу")
+@moderator_only
+def delete_group(message):
+    groups = execute_db("SELECT group_name, group_signature FROM groups_for_hetzner", fetchone=False)
+    if not groups:
+        bot.send_message(message.chat.id, "Немає доступних груп.")
+        return
+
+    markup = InlineKeyboardMarkup()
+    for group in groups:
+        gname, gsign = group
+        display = gsign if gsign else gname
+        markup.add(InlineKeyboardButton(display, callback_data=f"select_group_to_delete:{gname}"))
+
+    bot.send_message(message.chat.id, "Оберіть групу для видалення:", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("select_group_to_delete:"))
+@moderator_callback_only
+def select_group_to_delete(call):
+    group_name = call.data.split(":", 1)[1]
+    user_id = call.from_user.id
+
+    # Зберігаємо обрану групу для цього користувача
+    pending_group_deletion[user_id] = group_name
+
+    # Вимагаємо 2FA
+    bot.send_message(call.message.chat.id, "Введіть код з Google Authenticator для підтвердження видалення:")
+    bot.register_next_step_handler(call.message, verify_group_deletion_2fa)
+
+
+def verify_group_deletion_2fa(message):
+    user_id = message.from_user.id
+    group_name = pending_group_deletion.get(user_id)
+
+    if not group_name:
+        bot.send_message(message.chat.id, "❌ Помилка: сесія не знайдена. Спробуйте знову.")
+        return
+
+    # Перевірка 2FA
+    res = execute_db(
+        "SELECT secret_key FROM admins_2fa WHERE admin_id = %s",
+        (str(user_id),),
+        fetchone=True
+    )
+
+    if not res:
+        bot.send_message(message.chat.id, "❌ Ваш 2FA-профіль не знайдений")
+        return
+
+    secret = res[0]
+    totp = pyotp.TOTP(secret)
+
+    if totp.verify(message.text.strip()):
+        try:
+            # Видаляємо групу (каскадне видалення спрацює автоматично)
+            execute_db(
+                "DELETE FROM groups_for_hetzner WHERE group_name = %s",
+                (group_name,),
+                commit=True
+            )
+            bot.send_message(message.chat.id, f"✅ Група '{group_name}' та всі пов'язані дані видалені!")
+            update_users_cache()
+
+        except Exception as err:
+            bot.send_message(message.chat.id, f"❌ Помилка бази даних: {err}")
+
+    else:
+        bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
+
+    # Очищаємо тимчасові дані
+    pending_group_deletion.pop(user_id, None)
 
 # ==================== Загальний обробник текстових повідомлень ====================
 @bot.message_handler(content_types=['text'])
