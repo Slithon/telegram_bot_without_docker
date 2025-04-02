@@ -224,47 +224,73 @@ def is_user(user_id):
 # ==================== Меню та команди для Telegram бота ====================
 def send_commands_menu(message):
     """
-    Надсилає меню з вкладками-кнопками в клавіатурі.
-    Користувач обирає категорію (вкладку), і бот відправляє відповідний список команд.
+    Надсилає користувачу меню з кнопками під клавіатурою.
+    Після натискання кнопки її текст просто надсилається в чат.
     """
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.add(KeyboardButton("🔹 Основні команди"))
-    markup.add(KeyboardButton("🖥 Серверні команди"))
 
-    # Додаємо модераторські команди тільки для модераторів
-    if is_moderator(message.from_user.id):
-        markup.add(KeyboardButton("🛡 Модераторські команди"))
+    # Команди для звичайного користувача
+    user_commands = ["мій айді", "керування сервером"]
 
-    bot.send_message(message.chat.id, "Оберіть категорію команд:", reply_markup=markup)
+    admin_commands = [
+        "групи",
+        "розблокувати користувача",
+        "модератори",
+    ]
 
+    # Додаємо кнопки відповідно до прав користувача
+    buttons = user_commands + admin_commands
+    for button in buttons:
+        markup.add(button)
 
-@bot.message_handler(
-    func=lambda message: message.text in ["🔹 Основні команди", "🖥 Серверні команди", "🛡 Модераторські команди"])
-def handle_command_categories(message):
-    if message.text == "🔹 Основні команди":
-        text = ("✅ *Основні команди:*\n"
-                "- мій айді – Отримати ваш user ID\n"
-                "- керування сервером – Управління сервером")
+    bot.send_message(message.chat.id, "Оберіть команду або вкладку:", reply_markup=markup)
 
-    elif message.text == "🖥 Серверні команди":
-        text = ("🖥 *Серверні команди:*\n"
-                "- керування сервером \n"
-                "- добавити сервер ")
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "групи")
+def send_commands_menu_gruo(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
-    elif message.text == "🛡 Модераторські команди":
-        text = ("🛡 *Модераторські команди:*\n"
-                "- розблокувати користувача\n"
-                "- змінити групу \n"
-                "- створити одноразовий код \n"
-                "- створити групу \n"
-                "- добавити модератора \n"
-                "- список груп \n"
-                "- керування модераторами \n"
-                "- список одноразових кодів \n"
-                "- /register_admin \n"
-                "- /stop_bot ")
+    admin_commands = [
+        "створити групу",
+        "змінити групу",
+        "список груп"
+    ]
 
-    bot.send_message(message.chat.id, text, parse_mode="Markdown")
+    buttons = admin_commands
+    for button in buttons:
+        markup.add(button)
+
+    bot.send_message(message.chat.id, "Оберіть команду:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "модератори")
+def send_commands_menu_moder(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+
+    admin_commands = [
+        "добавити модератора",
+        "керування модераторами"
+    ]
+
+    buttons = admin_commands
+    for button in buttons:
+        markup.add(button)
+
+    bot.send_message(message.chat.id, "Оберіть команду:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "коди")
+def send_commands_menu_key(message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+
+    admin_commands = [
+        "створити одноразовий код",
+        "список одноразових кодів",
+        "добавити сервер"
+    ]
+
+    buttons = admin_commands
+    for button in buttons:
+        markup.add(button)
+
+    bot.send_message(message.chat.id, "Оберіть команду:", reply_markup=markup)
 @bot.message_handler(commands=["start"])
 @registered_only
 def start(message):
