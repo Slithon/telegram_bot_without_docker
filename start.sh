@@ -3,8 +3,8 @@ set -e
 
 # ==================== Налаштування змінних ====================
 # Git репозиторій
-REPO_URL="https://github.com/your_username/your_repo.git"
-REPO_DIR="your_repo"
+REPO_URL="https://github.com/Slithon/telegram_bot_without_docker"
+REPO_DIR="telegram_bot_without_docker"
 
 # MySQL налаштування
 MYSQL_ROOT_PASSWORD="your_mysql_root_password"
