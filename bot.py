@@ -828,7 +828,7 @@ def manage_moderators(message):
         mod_id, mod_username = mod
         markup.add(InlineKeyboardButton(f"Видалити {mod_username} (ID: {mod_id})", callback_data=f"remove_moderator:{mod_id}"))
     bot.send_message(message.chat.id, "Список модераторів:", reply_markup=markup)
-    send_commands_menu_moder()
+    send_commands_menu(message)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("remove_moderator:"))
 @moderator_callback_only
@@ -858,7 +858,7 @@ def verify_remove_moderator(message, mod_id):
             execute_db("DELETE FROM admins_2fa WHERE admin_id = %s", (mod_id,), commit=True)
             update_users_cache()
             bot.send_message(chat_id, f"Модератор з ID {mod_id} успішно видалено.")
-            send_commands_menu_moder()
+            send_commands_menu(message)
         except Exception as err:
             bot.send_message(chat_id, f"❌ Помилка видалення модератора: {err}")
     else:
@@ -971,7 +971,7 @@ def confirm_server_action_2fa(message, action, server_id, group_name, hetzner_ke
         bot.send_message(message.chat.id, "Невідома дія.")
         return
     if res.status_code in [200, 201]:
-        bot.send_message(message.chat.id, f"Команда '{action}' виконана. Відповідь API: {res.text}")
+        bot.send_message(message.chat.id, f"Команда '{action}' виконана.")
         send_commands_menu(message)
     else:
         bot.send_message(message.chat.id, f"❌ Помилка виконання команди '{action}': {res.text}")
