@@ -929,6 +929,7 @@ def process_server_selection(message):
     action_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     action_markup.add(KeyboardButton("Увімкнути"), KeyboardButton("Вимкнути"))
     action_markup.add(KeyboardButton("Перезавантажити"), KeyboardButton("Перевірити статус"))
+    action_markup.add(KeyboardButton("Меню"))
     bot.send_message(message.chat.id, "Оберіть дію для сервера:", reply_markup=action_markup)
     bot.register_next_step_handler(message, process_server_action)
 
@@ -972,10 +973,10 @@ def process_server_action(message):
         else:
             bot.send_message(message.chat.id, f"❌ Помилка: {res.text}")
             send_commands_menu(message)
-
     else:
         bot.send_message(message.chat.id, "Введіть 2FA-код для підтвердження операції:")
         bot.register_next_step_handler(message, confirm_server_action_2fa, action, server_id, group_name, hetzner_key)
+
 
 def confirm_server_action_2fa(message, action, server_id, group_name, hetzner_key):
     user_id = message.from_user.id
