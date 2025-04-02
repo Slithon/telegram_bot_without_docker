@@ -252,7 +252,8 @@ def send_commands_menu_gruo(message):
     admin_commands = [
         "створити групу",
         "змінити групу",
-        "список груп"
+        "список груп",
+        "повернутися назад"
     ]
 
     buttons = admin_commands
@@ -267,7 +268,8 @@ def send_commands_menu_moder(message):
 
     admin_commands = [
         "добавити модератора",
-        "керування модераторами"
+        "керування модераторами",
+        "повернутися назад"
     ]
 
     buttons = admin_commands
@@ -283,7 +285,8 @@ def send_commands_menu_key(message):
     admin_commands = [
         "створити одноразовий код",
         "список одноразових кодів",
-        "добавити сервер"
+        "добавити сервер",
+        "повернутися назад"
     ]
 
     buttons = admin_commands
