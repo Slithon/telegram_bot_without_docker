@@ -313,6 +313,7 @@ def my_id(message):
 def register(message):
     if execute_db("SELECT * FROM users WHERE user_id = %s", (str(message.chat.id),), fetchone=True):
         bot.send_message(message.chat.id, "Ви вже зареєстровані.")
+        send_commands_menu(message)
         return
     bot.register_next_step_handler(message, verify_one_time_code)
 
