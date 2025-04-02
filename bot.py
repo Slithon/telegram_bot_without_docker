@@ -101,7 +101,7 @@ def check_and_update_version():
         exit(1)
 
 check_and_update_version()
-
+print("Бот запущено успішно")
 # ==================== Допоміжна функція для роботи з базою даних ====================
 def execute_db(query, params=None, fetchone=False, commit=False):
     try:
@@ -1018,4 +1018,5 @@ def all_text(message):
     send_commands_menu(message)
 
 # ==================== Запуск бота ====================
+print("Бот запущено успішно")
 bot.polling()
