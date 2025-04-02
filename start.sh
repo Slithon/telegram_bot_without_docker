@@ -78,14 +78,9 @@ echo "База даних '${BOT_DB_NAME}' та користувач '${BOT_DB_U
 if ! command -v python3 &> /dev/null; then
     echo "Встановлення Python3..."
     sudo apt-get update -y
-    sudo apt-get install -y python3
+    sudo apt-get install -y python3.12
 fi
-
-if ! python3 -m venv --help &> /dev/null; then
-    echo "Встановлення пакету python3-venv..."
-    sudo apt-get update -y
-    sudo apt-get install -y python3-venv
-fi
+apt install python3.12-venv  -y > /dev/null 2>&1
 
 # ==================== Створення та активація віртуального середовища ====================
 if [ ! -d "venv" ]; then
