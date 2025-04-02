@@ -443,17 +443,6 @@ def process_unblock_2fa(message):
     else:
         bot.send_message(message.chat.id, "Користувача з таким ID не знайдено у списку заблокованих.")
 
-@bot.message_handler(func=lambda message: message.text.strip().lower() == "змінити групу")
-@moderator_only
-def switch_group(message):
-    groups = execute_db("SELECT group_name FROM groups_for_hetzner", fetchone=False)
-    if not groups:
-        bot.send_message(message.chat.id, "Немає доступних груп для перемикання.")
-        return
-    markup = InlineKeyboardMarkup()
-    for group in groups:
-        markup.add(InlineKeyboardButton(group[0], callback_data=f"switch_group:{group[0]}"))
-    bot.send_message(message.chat.id, "Оберіть групу для перемикання:", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("switch_group:"))
 @moderator_callback_only
@@ -469,23 +458,51 @@ def confirm_switch_group(call):
     bot.send_message(call.message.chat.id, "Введіть 2FA-код для підтвердження зміни групи:")
     bot.register_next_step_handler(call.message, verify_switch_group_2fa, new_group, user_id, call.message.message_id)
 
+
 def verify_switch_group_2fa(message, new_group, user_id, msg_id):
     res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(user_id),), fetchone=True)
-    if res:
-        admin_secret = res[0]
-    else:
+    if not res:
         bot.send_message(message.chat.id, "Не знайдено секретного ключа для 2FA.")
         return
+    admin_secret = res[0]
+
     totp = pyotp.TOTP(admin_secret)
     if not totp.verify(message.text.strip()):
         bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
         return
-    execute_db("UPDATE users SET group_name = %s WHERE user_id = %s", (new_group, user_id), commit=True)
-    bot.send_message(message.chat.id, f"Ви тепер працюєте в групі '{new_group}'.")
+
     try:
-        bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=msg_id, reply_markup=None)
+        # Отримуємо ім'я користувача
+        username = message.from_user.username or message.from_user.first_name
+
+        # Оновлюємо або створюємо запис у таблиці users
+        execute_db(
+            """
+            INSERT INTO users (user_id, username, group_name, secret_key)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            group_name = VALUES(group_name),
+            secret_key = VALUES(secret_key)
+            """,
+            (user_id, username, new_group, admin_secret),
+            commit=True
+        )
+        update_users_cache()
+
+        bot.send_message(message.chat.id, f"✅ Ви тепер працюєте в групі '{new_group}'")
+
     except Exception as e:
-        print(f"Помилка при видаленні кнопок: {e}")
+        bot.send_message(message.chat.id, f"❌ Помилка оновлення даних: {str(e)}")
+        return
+
+    try:
+        bot.edit_message_reply_markup(
+            chat_id=message.chat.id,
+            message_id=msg_id,
+            reply_markup=None
+        )
+    except Exception as e:
+        print(f"Помилка при видаленні кнопок: {str(e)}")
 
 @bot.message_handler(commands=["add_moderator_standart"])
 def add_moderator_standart(message):
