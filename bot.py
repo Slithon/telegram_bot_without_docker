@@ -443,6 +443,18 @@ def process_unblock_2fa(message):
     else:
         bot.send_message(message.chat.id, "Користувача з таким ID не знайдено у списку заблокованих.")
 
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "змінити групу")
+@moderator_only
+def switch_group(message):
+    groups = execute_db("SELECT group_name FROM groups_for_hetzner", fetchone=False)
+    if not groups:
+        bot.send_message(message.chat.id, "Немає доступних груп для перемикання.")
+        return
+    markup = InlineKeyboardMarkup()
+    for group in groups:
+        markup.add(InlineKeyboardButton(group[0], callback_data=f"switch_group:{group[0]}"))
+    bot.send_message(message.chat.id, "Оберіть групу для перемикання:", reply_markup=markup)
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("switch_group:"))
 @moderator_callback_only
@@ -503,7 +515,6 @@ def verify_switch_group_2fa(message, new_group, user_id, msg_id):
         )
     except Exception as e:
         print(f"Помилка при видаленні кнопок: {str(e)}")
-
 @bot.message_handler(commands=["add_moderator_standart"])
 def add_moderator_standart(message):
     try:
