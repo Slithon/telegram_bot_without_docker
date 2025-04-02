@@ -964,10 +964,19 @@ def process_server_action(message):
         if res.status_code in [200, 201]:
             data = res.json()
             status = data.get("server", {}).get("status", "Невідомо")
+            # Додаємо переклад для статусів
+            translations = {
+                "running": "запущено",
+                "stopped": "зупинено",
+                "rebooting": "перезавантажується"
+                # за потреби можна додати інші переклади
+            }
+            status = translations.get(status.lower(), status)
             bot.send_message(message.chat.id, f"Статус сервера: {status}")
             bot.send_message(message.chat.id, "Оберіть опцію:", reply_markup=main_markup)
         else:
             bot.send_message(message.chat.id, f"❌ Помилка: {res.text}")
+
     else:
         bot.send_message(message.chat.id, "Введіть 2FA-код для підтвердження операції:")
         bot.register_next_step_handler(message, confirm_server_action_2fa, action, server_id, group_name, hetzner_key)
@@ -1000,12 +1009,21 @@ def confirm_server_action_2fa(message, action, server_id, group_name, hetzner_ke
     else:
         bot.send_message(message.chat.id, "Невідома дія.")
         return
+
     if res.status_code in [200, 201]:
-        bot.send_message(message.chat.id, f"Команда '{action}' виконана.")
+        # Словник для перекладу назви дії у відповідь
+        action_translations = {
+            "Увімкнути": "запущено",
+            "Вимкнути": "зупинено",
+            "Перезавантажити": "перезавантажено"
+        }
+        translated_action = action_translations.get(action, action)
+        bot.send_message(message.chat.id, f"Команда '{translated_action}' виконана.")
         send_commands_menu(message)
     else:
         bot.send_message(message.chat.id, f"❌ Помилка виконання команди '{action}': {res.text}")
         send_commands_menu(message)
+
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "добавити сервер")
 @moderator_only
