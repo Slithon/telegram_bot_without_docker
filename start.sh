@@ -55,6 +55,9 @@ fi
 if [ -f "$emergency_bot_FILE" ]; then
     echo "Оновлення налаштувань у файлі $emergency_bot_FILE..."
     sed -i 's|TOKEN = "TELEGRAM_TOKEN"|TOKEN = "'"$YOUR_TOKEN"'"|' "$emergency_bot_FILE"
+    sed -i 's|DB_USER = "USER"|DB_USER = "'"$BOT_DB_USER"'"|' "$emergency_bot_FILE"
+    sed -i 's|DB_PASSWORD = "PASSWORD"|DB_PASSWORD = "'"$BOT_DB_PASSWORD"'"|' "$emergency_bot_FILE"
+    sed -i 's|DB_NAME = "DB_NAME"|DB_NAME = "'"$BOT_DB_NAME"'"|' "$emergency_bot_FILE"
 else
     echo "Файл $emergency_bot_FILE не знайдено. Пропускаємо оновлення налаштувань."
 fi

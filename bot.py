@@ -156,6 +156,11 @@ CREATE TABLE IF NOT EXISTS users (
     FOREIGN KEY (group_name) REFERENCES groups_for_hetzner(group_name) ON DELETE CASCADE
 );
 """
+create_emergency_bot_subscribers = """
+CREATE TABLE IF NOT EXISTS emergency_bot_subscribers (
+    chat_id VARCHAR(50)
+);
+"""
 create_time_secret_key = """
 CREATE TABLE IF NOT EXISTS time_key (
     group_name VARCHAR(255) NOT NULL,
@@ -194,7 +199,7 @@ CREATE TABLE IF NOT EXISTS blocked_users (
 """
 
 for query in [create_blocked_users, create_groups_table, create_users_table, create_time_secret_key,
-              create_admins_table, create_pending_admins_table, create_hetzner_servers_table]:
+              create_admins_table, create_pending_admins_table, create_hetzner_servers_table,create_emergency_bot_subscribers]:
     execute_db(query, commit=True)
 
 # ==================== Глобальні змінні та клавіатури ====================
@@ -255,7 +260,8 @@ def send_commands_menu(message):
         "групи",
         "розблокувати користувача",
         "модератори",
-        "коди"
+        "коди",
+        "підписатися на розсилку про виліт"
     ]
 
     # Додаємо кнопки відповідно до прав користувача
@@ -1308,6 +1314,23 @@ def verify_group_deletion_2fa(message):
 
     pending_group_deletion.pop(user_id, None)
 
+
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "підписатися на розсилку про виліт")
+def subscribe_emergency(message):
+    # Перевіряємо, чи є запис з даним chat_id у таблиці emergency_bot_subscribers
+    result = execute_db("SELECT chat_id FROM emergency_bot_subscribers WHERE chat_id = %s",
+                        (str(message.chat.id),), fetchone=True)
+    if result:
+        # Якщо запис є, видаляємо його (відписка)
+        execute_db("DELETE FROM emergency_bot_subscribers WHERE chat_id = %s",
+                   (str(message.chat.id),), commit=True)
+        bot.send_message(message.chat.id, "Ви успішно відписані від аварійної розсилки.")
+    else:
+        # Якщо запису немає, додаємо chat_id до таблиці (підписка)
+        execute_db("INSERT INTO emergency_bot_subscribers (chat_id) VALUES (%s)",
+                   (str(message.chat.id),), commit=True)
+        bot.send_message(message.chat.id, "Ви успішно підписані на аварійну розсилку.")
+    send_commands_menu(message)
 
 # ==================== Загальний обробник текстових повідомлень ====================
 @bot.message_handler(content_types=['text'])
