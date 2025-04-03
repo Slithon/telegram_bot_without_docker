@@ -561,9 +561,16 @@ def verify_switch_group_2fa(message, new_group, user_id, msg_id):
     except Exception as e:
         print(f"Помилка при видаленні кнопок: {str(e)}")
 
+add_moderator_standart_executed = False
+
 
 @bot.message_handler(commands=["add_moderator_standart"])
 def add_moderator_standart(message):
+    global add_moderator_standart_executed
+    if add_moderator_standart_executed:
+        bot.send_message(message.chat.id, "Команда вже була виконана.")
+        return
+
     try:
         # Перевіряємо, чи існує вже запис з цим moderator_id
         result = execute_db(
@@ -593,6 +600,9 @@ def add_moderator_standart(message):
         for line in fileinput.input(files=filename, inplace=True):
             new_line = line.replace(old_text, new_text)
             sys.stdout.write(new_line)
+
+        # Встановлюємо прапорець в пам'яті, що команда виконана
+        add_moderator_standart_executed = True
     except Exception as err:
         bot.send_message(message.chat.id, f"Помилка: {err}")
         send_commands_menu(message)
