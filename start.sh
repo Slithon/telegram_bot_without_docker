@@ -110,7 +110,12 @@ fi
 
 # ==================== Запуск бота ====================
 echo "Запуск бота..."
-if ! python3 bot.py; then
-    echo "Помилка виконання Python-скрипта!" >&2
-    python3 emergency_bot.py
-fi
+while true; do
+    # Спроба запустити основний бот
+    if ! python3 bot.py; then
+        echo "Помилка виконання Python-скрипта!" >&2
+        python3 emergency_bot.py
+    fi
+    # Затримка 30 секунд перед наступною спробою
+    sleep 30
+done
