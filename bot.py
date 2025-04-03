@@ -329,7 +329,6 @@ def send_commands_menu_key(message):
 @bot.message_handler(commands=["start"])
 @registered_only
 def start(message):
-    dddwqd
 
     send_commands_menu(message)
 
