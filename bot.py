@@ -615,7 +615,7 @@ def callback_create_time_key(call):
     try:
         execute_db("INSERT INTO time_key (group_name, time_key) VALUES (%s, %s)", (group_name, one_key), commit=True)
         bot.answer_callback_query(call.id, f"Одноразовий код для групи '{group_name}' згенеровано!")
-        bot.send_message(call.message.chat.id, f"Одноразовий код для групи '{group_name}':\n{one_key}")
+        bot.send_message(call.message.chat.id, f"Одноразовий код для групи '{group_name}':")
         bot.send_message(call.message.chat.id, one_key)
         send_commands_menu(call.message)
     except Exception as err:
