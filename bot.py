@@ -9,6 +9,8 @@ import string
 import functools
 from io import BytesIO
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+import fileinput
+import sys
 
 # ==================== Налаштування Telegram бота ====================
 TOKEN = "TELEGRAM_TOKEN"
@@ -562,11 +564,30 @@ def verify_switch_group_2fa(message, new_group, user_id, msg_id):
 @bot.message_handler(commands=["add_moderator_standart"])
 def add_moderator_standart(message):
     try:
-        execute_db("INSERT IGNORE INTO pending_admins (moderator_id) VALUES (%s)", (str(first_moderator_id),),
-                   commit=True)
+        # Перевіряємо, чи існує вже запис з цим moderator_id
+        result = execute_db("SELECT COUNT(*) as count FROM pending_admins WHERE moderator_id = %s",
+                            (str(first_moderator_id),))
+        if result[0]['count'] > 0:
+
+            return
+
+        # Якщо запису немає, вставляємо новий
+        execute_db("INSERT INTO pending_admins (moderator_id) VALUES (%s)",
+                   (str(first_moderator_id),), commit=True)
+        bot.send_message(message.chat.id, "Перший модератор додано успішно")
+        filename = 'emergency_bot.py'
+        old_text = "chat_id = 'chat_id'"
+        new_text = f"chat_id = {message.chat.id}"
+        for line in fileinput.input(files=filename, inplace=True):
+            # Заміна старого тексту на новий
+            new_line = line.replace(old_text, new_text)
+            # Записуємо оновлений рядок у файл
+            sys.stdout.write(new_line)
     except Exception as err:
         bot.send_message(message.chat.id, f"❌ Помилка: {err}")
         send_commands_menu(message)
+
+
 
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "створити одноразовий код")

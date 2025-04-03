@@ -16,7 +16,7 @@ BOT_DB_PASSWORD="PASSWORD"
 YOUR_TOKEN="your_actual_telegram_token"
 first_moderator_id="your_moderator_id"
 BOT_FILE="bot.py"   # Файл, у якому потрібно замінити змінні
-
+emergency_bot_FILE="emergency_bot.py"
 # ==================== Non-interactive режим для apt-get ====================
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -y > /dev/null 2>&1
@@ -51,6 +51,12 @@ if [ -f "$BOT_FILE" ]; then
     sed -i 's|DB_NAME = "DB_NAME"|DB_NAME = "'"$BOT_DB_NAME"'"|' "$BOT_FILE"
 else
     echo "Файл $BOT_FILE не знайдено. Пропускаємо оновлення налаштувань."
+fi
+if [ -f "$emergency_bot_FILE" ]; then
+    echo "Оновлення налаштувань у файлі $emergency_bot_FILE..."
+    sed -i 's|TOKEN = "TELEGRAM_TOKEN"|TOKEN = "'"$YOUR_TOKEN"'"|' "$emergency_bot_FILE"
+else
+    echo "Файл $emergency_bot_FILE не знайдено. Пропускаємо оновлення налаштувань."
 fi
 
 # ==================== Встановлення MySQL (якщо не встановлено) ====================
