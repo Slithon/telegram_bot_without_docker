@@ -1272,7 +1272,7 @@ def verify_group_deletion_2fa(message):
 @bot.message_handler(content_types=['text'])
 @registered_only
 def all_text(message):
-    send_commands_menu(messasadqdqdqge)
+    send_commands_menu(message)
 
 
 # ==================== Запуск бота ====================
