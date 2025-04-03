@@ -426,6 +426,7 @@ def unblock_user(message):
     blocked = execute_db("SELECT user_id, nickname FROM blocked_users", fetchone=False)
     if not blocked:
         bot.send_message(message.chat.id, "Немає заблокованих користувачів.")
+        send_commands_menu(message)
         return
     markup = InlineKeyboardMarkup()
     for user in blocked:
