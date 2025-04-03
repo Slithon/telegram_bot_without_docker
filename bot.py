@@ -18,7 +18,7 @@ bot = telebot.TeleBot(TOKEN)
 logging.basicConfig(level=logging.INFO, filename="bot.log", format="%(asctime)s - %(levelname)s - %(message)s")
 
 # ==================== Конфігурація бази даних ====================
-DB_HOST = "localost"
+DB_HOST = "localhost"
 DB_USER = "USER"
 DB_PASSWORD = "PASSWORD"
 DB_NAME = "DB_NAME"
