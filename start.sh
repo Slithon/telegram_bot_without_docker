@@ -107,4 +107,7 @@ fi
 
 # ==================== Запуск бота ====================
 echo "Запуск бота..."
-python bot.py
+if ! python3 bot.py; then
+    echo "Помилка виконання Python-скрипта!" >&2
+    python3 emergency_bot.py
+fi
