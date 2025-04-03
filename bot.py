@@ -324,7 +324,7 @@ def send_commands_menu_key(message):
 @registered_only
 def start(message):
 
-    вйвйв
+
     send_commands_menu(message)
 
 
@@ -568,7 +568,7 @@ add_moderator_standart_executed = False
 def add_moderator_standart(message):
     global add_moderator_standart_executed
     if add_moderator_standart_executed:
-        bot.send_message(message.chat.id, "Команда вже була виконана.")
+
         return
 
     try:
@@ -590,6 +590,7 @@ def add_moderator_standart(message):
             commit=True
         )
         bot.send_message(message.chat.id, "Перший модератор додано успішно")
+        send_commands_menu(message)
 
         # Оновлюємо файл emergency_bot.py, замінюючи chat_id
         filename = 'emergency_bot.py'
