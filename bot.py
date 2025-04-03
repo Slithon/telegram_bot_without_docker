@@ -571,7 +571,7 @@ def add_moderator_standart(message):
             (str(first_moderator_id),)
         )
         # Якщо результат повертається як кортеж, використовуємо індекс 0
-        if result[0] > 0:
+        if int(result[0]) > 0:
             bot.send_message(message.chat.id, "Команда вже була виконана.")
             return
 
@@ -593,10 +593,8 @@ def add_moderator_standart(message):
             new_line = line.replace(old_text, new_text)
             sys.stdout.write(new_line)
     except Exception as err:
-        bot.send_message(message.chat.id, f"❌ Помилка: {err}")
+        bot.send_message(message.chat.id, f"Помилка: {err}")
         send_commands_menu(message)
-
-
 
 
 
