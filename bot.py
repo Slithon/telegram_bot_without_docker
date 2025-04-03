@@ -731,7 +731,7 @@ def list_groups(message):
         markup.add(InlineKeyboardButton("Видалити користувача", callback_data=f"delete_user_group:{group_name}"))
         markup.add(InlineKeyboardButton("Видалити сервер", callback_data=f"delete_server_group:{group_name}"))
         bot.send_message(message.chat.id, text, reply_markup=markup)
-        send_commands_menu(message)
+    send_commands_menu(message)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_user_group:"))
 @moderator_callback_only
