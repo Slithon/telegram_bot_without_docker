@@ -568,10 +568,11 @@ def add_moderator_standart(message):
         # Перевіряємо, чи існує вже запис з цим moderator_id
         result = execute_db(
             "SELECT COUNT(*) as count FROM pending_admins WHERE moderator_id = %s",
-            (str(first_moderator_id),)
+            (str(first_moderator_id),),
+            fetchone=True
         )
         # Якщо результат повертається як кортеж, використовуємо індекс 0
-        if int(result[0]) > 0:
+        if result and int(result[0]) > 0:
             bot.send_message(message.chat.id, "Команда вже була виконана.")
             return
 
