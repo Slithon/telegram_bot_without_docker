@@ -598,15 +598,7 @@ def add_moderator_standart(message):
         bot.send_message(message.chat.id, "Перший модератор додано успішно")
         send_commands_menu(message)
 
-        # Оновлюємо файл emergency_bot.py, замінюючи chat_id
-        filename = 'emergency_bot.py'
-        old_text = "chat_id = 'chat_id'"
-        new_text = f"chat_id = {message.chat.id}"
-        import fileinput
-        import sys
-        for line in fileinput.input(files=filename, inplace=True):
-            new_line = line.replace(old_text, new_text)
-            sys.stdout.write(new_line)
+
 
         # Встановлюємо прапорець в пам'яті, що команда виконана
         add_moderator_standart_executed = True
