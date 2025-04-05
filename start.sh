@@ -17,10 +17,14 @@ YOUR_TOKEN="your_actual_telegram_token"
 first_moderator_id="your_moderator_id"
 BOT_FILE="bot.py"   # Файл, у якому потрібно замінити змінні
 emergency_bot_FILE="emergency_bot.py"
+sys_auto_upd=1
+
 # ==================== Non-interactive режим для apt-get ====================
-export DEBIAN_FRONTEND=noninteractive
-sudo apt-get update -y > /dev/null 2>&1
-sudo apt-get upgrade -y > /dev/null 2>&1
+if [ "$sys_auto_upd" = "1" ]; then
+  export DEBIAN_FRONTEND=noninteractive
+  sudo apt-get update -y > /dev/null 2>&1
+  sudo apt-get upgrade -y > /dev/null 2>&1
+fi
 
 # ==================== Встановлення Git (якщо не встановлено) ====================
 if ! command -v git &> /dev/null; then
@@ -28,6 +32,27 @@ if ! command -v git &> /dev/null; then
     sudo apt-get update -y
     sudo apt-get install -y git
 fi
+# ==================== Встановлення MySQL (якщо не встановлено) ====================
+if ! command -v mysql &> /dev/null; then
+    echo "Встановлення MySQL Server..."
+    sudo apt-get update -y
+    sudo apt-get install -y mysql-server
+    sudo systemctl enable mysql
+fi
+if ! REPO_DIR ;then
+# ==================== Запуск MySQL ====================
+echo "Запуск MySQL..."
+sudo systemctl start mysql
+
+# ==================== Налаштування MySQL для бота ====================
+echo "Налаштовуємо MySQL..."
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`${BOT_DB_NAME}\`;"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "CREATE USER IF NOT EXISTS '${BOT_DB_USER}'@'localhost' IDENTIFIED BY '${BOT_DB_PASSWORD}';"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "GRANT ALL PRIVILEGES ON \`${BOT_DB_NAME}\`.* TO '${BOT_DB_USER}'@'localhost';"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "FLUSH PRIVILEGES;"
+echo "База даних '${BOT_DB_NAME}' та користувач '${BOT_DB_USER}' налаштовані."
+fi
+
 
 # ==================== Клонування репозиторію ====================
 if [ ! -d "$REPO_DIR" ]; then
@@ -62,26 +87,6 @@ else
     echo "Файл $emergency_bot_FILE не знайдено. Пропускаємо оновлення налаштувань."
 fi
 
-# ==================== Встановлення MySQL (якщо не встановлено) ====================
-if ! command -v mysql &> /dev/null; then
-    echo "Встановлення MySQL Server..."
-    sudo apt-get update -y
-    sudo apt-get install -y mysql-server
-    sudo systemctl enable mysql
-fi
-
-# ==================== Запуск MySQL ====================
-echo "Запуск MySQL..."
-sudo systemctl start mysql
-
-# ==================== Налаштування MySQL для бота ====================
-echo "Налаштовуємо MySQL..."
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`${BOT_DB_NAME}\`;"
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "CREATE USER IF NOT EXISTS '${BOT_DB_USER}'@'localhost' IDENTIFIED BY '${BOT_DB_PASSWORD}';"
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "GRANT ALL PRIVILEGES ON \`${BOT_DB_NAME}\`.* TO '${BOT_DB_USER}'@'localhost';"
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "FLUSH PRIVILEGES;"
-
-echo "База даних '${BOT_DB_NAME}' та користувач '${BOT_DB_USER}' налаштовані."
 
 # ==================== Встановлення Python3 та venv (якщо не встановлено) ====================
 if ! command -v python3 &> /dev/null; then
@@ -116,6 +121,6 @@ while true; do
         echo "Помилка виконання Python-скрипта!" >&2
         python3 emergency_bot.py
     fi
-    # Затримка 30 секунд перед наступною спробою
-    sleep 30
+    # Затримка 120 секунд перед наступною спробою
+    sleep 120
 done

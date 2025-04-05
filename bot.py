@@ -101,9 +101,10 @@ def check_and_update_version():
                 connection.close()
                 exit(1)
         else:
-            print("Створення запису з поточною версією бази даних...")
+            print("Створення бази данних")
             cursor.execute("INSERT INTO version (id, version) VALUES (1, %s)", (VERSION,))
             connection.commit()
+            startup_initial()
         connection.close()
     except mysql.connector.Error as err:
         logging.error(f"Помилка при роботі з версією бази: {err}")
@@ -197,10 +198,12 @@ CREATE TABLE IF NOT EXISTS blocked_users (
     reason TEXT
 );
 """
+def startup_initial():
+    for query in [create_blocked_users, create_groups_table, create_users_table, create_time_secret_key,
+                  create_admins_table, create_pending_admins_table, create_hetzner_servers_table,
+                  create_emergency_bot_subscribers]:
+        execute_db(query, commit=True)
 
-for query in [create_blocked_users, create_groups_table, create_users_table, create_time_secret_key,
-              create_admins_table, create_pending_admins_table, create_hetzner_servers_table,create_emergency_bot_subscribers]:
-    execute_db(query, commit=True)
 
 # ==================== Глобальні змінні та клавіатури ====================
 main_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
@@ -261,7 +264,7 @@ def send_commands_menu(message):
         "розблокувати користувача",
         "модератори",
         "коди",
-        "підписатися на розсилку про виліт"
+        "підписатися на розсилку про вильоти"
     ]
 
     # Додаємо кнопки відповідно до прав користувача
@@ -281,7 +284,7 @@ def send_commands_menu_gruo(message):
         "змінити групу",
         "список груп",
         "видалити групу",
-        "добавити сервер",
+        "додати сервер",
         "повернутися назад"
     ]
 
@@ -297,7 +300,7 @@ def send_commands_menu_moder(message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
     admin_commands = [
-        "добавити модератора",
+        "додати модератора",
         "керування модераторами",
         "повернутися назад"
     ]
@@ -594,7 +597,7 @@ def add_moderator_standart(message):
             (str(first_moderator_id),),
             commit=True
         )
-        bot.send_message(message.chat.id, "Перший модератор додано успішно")
+        bot.send_message(message.chat.id, "Перший модератор доданий успішно")
         send_commands_menu(message)
 
 
@@ -715,7 +718,7 @@ def process_group_signature(message):
         send_commands_menu(message)
 
 
-@bot.message_handler(func=lambda message: message.text.strip().lower() == "добавити модератора")
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "додати модератора")
 @moderator_only
 def add_moderator(message):
     bot.send_message(message.chat.id, "Введіть ID модератора для додавання:")
@@ -1135,7 +1138,7 @@ def confirm_server_action_2fa(message, action, server_id, group_name, hetzner_ke
         send_commands_menu(message)
 
 
-@bot.message_handler(func=lambda message: message.text.strip().lower() == "добавити сервер")
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "додати сервер")
 @moderator_only
 def add_server(message):
     groups = execute_db("SELECT group_name, group_signature FROM groups_for_hetzner", fetchone=False)
@@ -1306,7 +1309,7 @@ def verify_group_deletion_2fa(message):
     pending_group_deletion.pop(user_id, None)
 
 
-@bot.message_handler(func=lambda message: message.text.strip().lower() == "підписатися на розсилку про виліт")
+@bot.message_handler(func=lambda message: message.text.strip().lower() == "підписатися на розсилку про вильоти")
 def subscribe_emergency(message):
     # Перевіряємо, чи є запис з даним chat_id у таблиці emergency_bot_subscribers
     result = execute_db("SELECT chat_id FROM emergency_bot_subscribers WHERE chat_id = %s",
