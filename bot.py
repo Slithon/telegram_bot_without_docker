@@ -585,7 +585,7 @@ def add_moderator_standart(message):
         )
         # Якщо результат повертається як кортеж, використовуємо індекс 0
         if result and int(result[0]) > 0:
-            bot.send_message(message.chat.id, "Команда вже була виконана.")
+
             return
 
         # Якщо запису немає, вставляємо новий
