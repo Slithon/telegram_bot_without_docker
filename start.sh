@@ -90,12 +90,12 @@ fi
 
 
 # ==================== Встановлення Python3 та venv (якщо не встановлено) ====================
-if ! command -v python3 &> /dev/null; then
+if ! command -v python3.12 &> /dev/null; then
     echo "Встановлення Python3..."
     sudo apt-get update -y
     sudo apt-get install -y python3.12
 fi
-apt-get install python3-venv  -y > /dev/null 2>&1
+apt-get install python3.12-venv  -y > /dev/null 2>&1
 
 # ==================== Створення та активація віртуального середовища ====================
 if [ ! -d "venv" ]; then
