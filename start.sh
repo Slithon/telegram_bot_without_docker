@@ -39,7 +39,8 @@ if ! command -v mysql &> /dev/null; then
     sudo apt-get install -y mysql-server
     sudo systemctl enable mysql
 fi
-if ! REPO_DIR ;then
+if [ ! -d "$REPO_DIR" ]; then
+
 # ==================== Запуск MySQL ====================
 echo "Запуск MySQL..."
 sudo systemctl start mysql
