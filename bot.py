@@ -727,19 +727,34 @@ def process_group_signature(message):
 @moderator_only
 def add_moderator(message):
     bot.send_message(message.chat.id, "Введіть ID модератора для додавання:")
-    bot.register_next_step_handler(message, process_add_moderator)
+    bot.register_next_step_handler(message, process_add_moderator_request)
 
 
-def process_add_moderator(message):
+def process_add_moderator_request(message):
     moderator_id = message.text.strip()
-    try:
-        execute_db("INSERT IGNORE INTO pending_admins (moderator_id) VALUES (%s)", (moderator_id,), commit=True)
-        bot.send_message(message.chat.id, f"Модератор з ID {moderator_id} доданий до списку очікування.")
-        send_commands_menu(message)
-    except Exception as err:
-        bot.send_message(message.chat.id, f"❌ Помилка додавання модератора: {err}")
-        send_commands_menu(message)
+    # Після введення ID, запитуємо 2FA-код для підтвердження операції
+    bot.send_message(message.chat.id, "Введіть ваш 2FA-код для підтвердження додавання модератора:")
+    bot.register_next_step_handler(message, verify_add_moderator_2fa, moderator_id)
 
+
+def verify_add_moderator_2fa(message, moderator_id):
+    admin_id = str(message.from_user.id)
+    res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (admin_id,), fetchone=True)
+    if not res:
+        bot.send_message(message.chat.id, "Не знайдено ваш секретний ключ для 2FA.")
+        send_commands_menu(message)
+        return
+    admin_secret = res[0]
+    totp = pyotp.TOTP(admin_secret)
+    if totp.verify(message.text.strip()):
+        try:
+            execute_db("INSERT IGNORE INTO pending_admins (moderator_id) VALUES (%s)", (moderator_id,), commit=True)
+            bot.send_message(message.chat.id, f"Модератор з ID {moderator_id} доданий до списку очікування.")
+        except Exception as err:
+            bot.send_message(message.chat.id, f"❌ Помилка додавання модератора: {err}")
+    else:
+        bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
+    send_commands_menu(message)
 
 @bot.message_handler(func=lambda message: message.text.strip().lower() == "список груп")
 @moderator_only
