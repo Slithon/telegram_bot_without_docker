@@ -117,9 +117,9 @@ CREATE TABLE IF NOT EXISTS users (
 """
 create_emergency_bot_subscribers = """
 CREATE TABLE IF NOT EXISTS emergency_bot_subscribers (
-    chat_id VARCHAR(50),
+    admin_id VARCHAR(50),
     user_id VARCHAR(50),
-    FOREIGN KEY (user_id) REFERENCES admins_2fa(user_id) ON DELETE CASCADE
+    FOREIGN KEY (admin_id) REFERENCES admins_2fa(admin_id) ON DELETE CASCADE
 );
 """
 create_time_secret_key = """
