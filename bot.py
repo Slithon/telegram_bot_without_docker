@@ -70,48 +70,6 @@ def moderator_callback_only(func):
 
 
 # ==================== Функція перевірки версії бази даних ====================
-def check_and_update_version():
-    try:
-        connection = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME
-        )
-        cursor = connection.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS version (
-                id INT PRIMARY KEY,
-                version VARCHAR(10) NOT NULL
-            )
-        """)
-        connection.commit()
-        cursor.execute("SELECT version FROM version WHERE id = 1")
-        row = cursor.fetchone()
-        if row:
-            db_version = row[0]
-            if db_version == VERSION:
-                print("База даних актуальна. Ініціалізація пропущена.")
-            elif float(db_version) + 0.1 == float(VERSION):
-                print(f"Оновлення бази даних з версії {db_version} до {VERSION}...")
-                cursor.execute("UPDATE version SET version = %s WHERE id = 1", (VERSION,))
-                connection.commit()
-            else:
-                print("Помилка: версія бази несумісна з поточною версією коду!")
-                connection.close()
-                exit(1)
-        else:
-            print("Створення бази данних")
-            cursor.execute("INSERT INTO version (id, version) VALUES (1, %s)", (VERSION,))
-            connection.commit()
-            startup_initial()
-        connection.close()
-    except mysql.connector.Error as err:
-        logging.error(f"Помилка при роботі з версією бази: {err}")
-        exit(1)
-
-
-check_and_update_version()
 
 
 # ==================== Допоміжна функція для роботи з базою даних ====================
@@ -203,6 +161,48 @@ def startup_initial():
                   create_admins_table, create_pending_admins_table, create_hetzner_servers_table,
                   create_emergency_bot_subscribers]:
         execute_db(query, commit=True)
+def check_and_update_version():
+    try:
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME
+        )
+        cursor = connection.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS version (
+                id INT PRIMARY KEY,
+                version VARCHAR(10) NOT NULL
+            )
+        """)
+        connection.commit()
+        cursor.execute("SELECT version FROM version WHERE id = 1")
+        row = cursor.fetchone()
+        if row:
+            db_version = row[0]
+            if db_version == VERSION:
+                print("База даних актуальна. Ініціалізація пропущена.")
+            elif float(db_version) + 0.1 == float(VERSION):
+                print(f"Оновлення бази даних з версії {db_version} до {VERSION}...")
+                cursor.execute("UPDATE version SET version = %s WHERE id = 1", (VERSION,))
+                connection.commit()
+            else:
+                print("Помилка: версія бази несумісна з поточною версією коду!")
+                connection.close()
+                exit(1)
+        else:
+            print("Створення бази данних")
+            cursor.execute("INSERT INTO version (id, version) VALUES (1, %s)", (VERSION,))
+            connection.commit()
+            startup_initial()
+        connection.close()
+    except mysql.connector.Error as err:
+        logging.error(f"Помилка при роботі з версією бази: {err}")
+        exit(1)
+
+
+check_and_update_version()
 
 
 # ==================== Глобальні змінні та клавіатури ====================
