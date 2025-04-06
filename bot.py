@@ -525,7 +525,26 @@ def confirm_switch_group(call):
         return
     bot.send_message(call.message.chat.id, "Введіть 2FA-код для підтвердження зміни групи:")
     bot.register_next_step_handler(call.message, verify_switch_group_2fa, new_group, user_id, call.message.message_id)
+@bot.message_handler(commands=["stop"])
+@moderator_only
+def stop_bot(message):
+    bot.send_message(message.chat.id, "Введіть свій 2FA-код для підтвердження зупинки бота:")
+    bot.register_next_step_handler(message, confirm_stop)
 
+def confirm_stop(message):
+    admin_id = str(message.from_user.id)
+    res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (admin_id,), fetchone=True)
+    if not res:
+        bot.send_message(message.chat.id, "Секретний ключ не знайдено. Операція скасована.")
+        return
+    secret = res[0]
+    totp = pyotp.TOTP(secret)
+    if totp.verify(message.text.strip()):
+        bot.send_message(message.chat.id, "2FA підтверджено. Зупинка бота...")
+        import sys
+        sys.exit(0)
+    else:
+        bot.send_message(message.chat.id, "❌ Невірний 2FA-код. Операція скасована.")
 
 def verify_switch_group_2fa(message, new_group, user_id, msg_id):
     res = execute_db("SELECT secret_key FROM admins_2fa WHERE admin_id = %s", (str(user_id),), fetchone=True)
