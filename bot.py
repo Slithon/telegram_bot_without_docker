@@ -24,7 +24,7 @@ DB_USER = "USER"
 DB_PASSWORD = "PASSWORD"
 DB_NAME = "DB_NAME"
 # ==================== Версія коду ====================
-VERSION = "1.0"
+VERSION = "1.1"
 
 
 # ==================== Декоратори для перевірки реєстрації та ролі ====================
@@ -117,7 +117,9 @@ CREATE TABLE IF NOT EXISTS users (
 """
 create_emergency_bot_subscribers = """
 CREATE TABLE IF NOT EXISTS emergency_bot_subscribers (
-    chat_id VARCHAR(50)
+    chat_id VARCHAR(50),
+    user_id VARCHAR(50),
+    FOREIGN KEY (user_id) REFERENCES admins_2fa(user_id) ON DELETE CASCADE
 );
 """
 create_time_secret_key = """
@@ -185,6 +187,8 @@ def check_and_update_version():
                 print("База даних актуальна. Ініціалізація пропущена.")
             elif float(db_version) + 0.1 == float(VERSION):
                 print(f"Оновлення бази даних з версії {db_version} до {VERSION}...")
+                cursor.execute("DROP TABLE emergency_bot_subscribers;")
+                cursor.execute(create_emergency_bot_subscribers)
                 cursor.execute("UPDATE version SET version = %s WHERE id = 1", (VERSION,))
                 connection.commit()
             else:
@@ -1321,8 +1325,9 @@ def subscribe_emergency(message):
         bot.send_message(message.chat.id, "Ви успішно відписані від аварійної розсилки.")
     else:
         # Якщо запису немає, додаємо chat_id до таблиці (підписка)
-        execute_db("INSERT INTO emergency_bot_subscribers (chat_id) VALUES (%s)",
-                   (str(message.chat.id),), commit=True)
+        execute_db("INSERT INTO emergency_bot_subscribers (chat_id, user_id) VALUES (%s, %s)",
+                   (str(message.chat.id), str(message.from_user.id)), commit=True)
+
         bot.send_message(message.chat.id, "Ви успішно підписані на аварійну розсилку.")
     send_commands_menu(message)
 
