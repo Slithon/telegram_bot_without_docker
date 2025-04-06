@@ -7,7 +7,7 @@ SCRIPT_PATH="$(readlink -f "$0")"
 if crontab -l 2>/dev/null | grep -Fq "$SCRIPT_PATH"; then
   echo "Запис для автозапуску вже існує."
   else
-    ( crontab -l 2>/dev/null; echo "@reboot $SCRIPT_PATH" ) | crontab -
+    ( crontab -l ; echo "@reboot $SCRIPT_PATH" ) | crontab -
 
 echo "Запис для автозапуску додано."
 fi
