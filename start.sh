@@ -97,6 +97,11 @@ if ! command -v python3 &> /dev/null; then
 fi
 apt-get install python3-venv  -y > /dev/null 2>&1
 
+if ! command -v pip &> /dev/null; then
+    sudo apt install -y python3-pip
+
+fi
+
 # ==================== Створення та активація віртуального середовища ====================
 if [ ! -d "venv" ]; then
     echo "Створення віртуального середовища..."
