@@ -131,17 +131,19 @@ else
 fi
 
 # ==================== Запуск бота ====================
-echo "Запуск бота..."
 while true; do
+    echo "Запуск bot.py..."
     python3 bot.py
     exit_code=$?
+    echo "bot.py завершився з кодом $exit_code"
     if [ "$exit_code" -eq 0 ]; then
         echo "Бот зупинено через sys.exit(0). Завершення скрипту."
         exit 0
     else
-        echo "Помилка виконання Python-скрипта!" >&2
+        echo "Помилка виконання Python-скрипта! Запуск emergency_bot.py" >&2
         python3 emergency_bot.py
     fi
+    echo "Очікування 120 секунд перед наступною спробою..."
     sleep 120
 done
 
