@@ -6,13 +6,14 @@ SCRIPT_PATH="$(readlink -f "$0")"
 # Перевіряємо, чи вже існує запис у crontab для цього скрипту
 if crontab -l 2>/dev/null | grep -Fq "$SCRIPT_PATH"; then
   echo "Запис для автозапуску вже існує."
+  else
+    ( crontab -l 2>/dev/null; echo "@reboot $SCRIPT_PATH" ) | crontab -
 
+echo "Запис для автозапуску додано."
 fi
 
 # Додаємо запис для автозапуску (@reboot) до crontab
-( crontab -l 2>/dev/null; echo "@reboot $SCRIPT_PATH" ) | crontab -
 
-echo "Запис для автозапуску додано."
 # ==================== Налаштування змінних ====================
 # Git репозиторій
 REPO_URL="https://github.com/Slithon/telegram_bot_without_docker"
