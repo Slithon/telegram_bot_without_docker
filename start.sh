@@ -6,7 +6,7 @@ SCRIPT_PATH="$(readlink -f "$0")"
 # Перевіряємо, чи вже існує запис у crontab для цього скрипту
 if crontab -l 2>/dev/null | grep -Fq "$SCRIPT_PATH"; then
   echo "Запис для автозапуску вже існує."
-  exit 0
+
 fi
 
 # Додаємо запис для автозапуску (@reboot) до crontab
