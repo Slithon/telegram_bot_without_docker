@@ -8,8 +8,9 @@ if crontab -l 2>/dev/null | grep -Fq "$SCRIPT_PATH"; then
   echo "Запис для автозапуску вже існує."
   else
     ( crontab -l ; echo "@reboot $SCRIPT_PATH" ) | crontab -
+    echo "Запис для автозапуску додано."
 
-echo "Запис для автозапуску додано."
+
 fi
 
 # Додаємо запис для автозапуску (@reboot) до crontab
