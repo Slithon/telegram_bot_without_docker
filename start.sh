@@ -1,19 +1,49 @@
 #!/bin/bash
 set -e
-# Отримуємо абсолютний шлях до цього скрипту
-SCRIPT_PATH="$(readlink -f "$0")"
 
-# Перевіряємо, чи вже існує запис у crontab для цього скрипту
-if crontab -l 2>/dev/null | grep -Fq "$SCRIPT_PATH"; then
-  echo "Запис для автозапуску вже існує."
-  else
-    ( crontab -l ; echo "@reboot $SCRIPT_PATH" ) | crontab -
-    echo "Запис для автозапуску додано."
+set -e
 
+# Інші налаштування та команди вашого скрипту...
 
+# Змінні для створення unit-файлу
+SERVICE_NAME="telegram_bot.service"
+SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
+WORKING_DIR="$(pwd)"
+SCRIPT_PATH="${WORKING_DIR}/$(basename "$0")"  # Абсолютний шлях до поточного скрипту
+
+# Перевірка чи unit-файл вже існує
+if [ ! -f "${SERVICE_FILE}" ]; then
+    echo "Unit-файл ${SERVICE_FILE} не знайдено. Створюємо новий..."
+    sudo bash -c "cat > ${SERVICE_FILE}" <<EOF
+[Unit]
+Description=Telegram Bot Auto Start Service
+After=network.target mysql.service
+
+[Service]
+User=root
+WorkingDirectory=${WORKING_DIR}
+ExecStart=${SCRIPT_PATH}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+echo "Перезавантаження конфігурації systemd..."
+sudo systemctl daemon-reload
+
+echo "Увімкнення сервісу для автозапуску..."
+sudo systemctl enable ${SERVICE_NAME}
+
+echo "Запуск сервісу..."
+sudo systemctl start ${SERVICE_NAME}
+
+echo "Сервіс ${SERVICE_NAME} успішно встановлено!"
+else
+    echo "Unit-файл ${SERVICE_FILE} вже існує. Пропускаємо створення."
 fi
 
-# Додаємо запис для автозапуску (@reboot) до crontab
+# Перезавантаження конфігурації systemd та увімкнення сервісу
 
 # ==================== Налаштування змінних ====================
 # Git репозиторій
