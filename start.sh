@@ -103,10 +103,10 @@ if ! command -v pip &> /dev/null; then
 fi
 
 # ==================== Створення та активація віртуального середовища ====================
-if [ ! -d "venv" ]; then
-    echo "Створення віртуального середовища..."
-    python3 -m venv venv
-fi
+
+echo "Створення віртуального середовища..."
+python3 -m venv venv
+
 
 source venv/bin/activate
 
