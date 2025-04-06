@@ -541,6 +541,7 @@ def confirm_stop(message):
     totp = pyotp.TOTP(secret)
     if totp.verify(message.text.strip()):
         bot.send_message(message.chat.id, "2FA підтверджено. Зупинка бота...")
+        bot.stop_polling()
         import sys
         sys.exit(0)
     else:
