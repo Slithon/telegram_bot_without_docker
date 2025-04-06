@@ -202,6 +202,7 @@ def check_and_update_version():
             startup_initial()
         connection.close()
     except mysql.connector.Error as err:
+        print(f"Помилка при роботі з версією бази: {err}")
         logging.error(f"Помилка при роботі з версією бази: {err}")
         exit(1)
 
