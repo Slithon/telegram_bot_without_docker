@@ -24,7 +24,7 @@ DB_USER = "USER"
 DB_PASSWORD = "PASSWORD"
 DB_NAME = "DB_NAME"
 # ==================== Версія коду ====================
-VERSION = "1.1"
+VERSION = "1.2"
 
 
 # ==================== Декоратори для перевірки реєстрації та ролі ====================
@@ -117,8 +117,8 @@ CREATE TABLE IF NOT EXISTS users (
 """
 create_emergency_bot_subscribers = """
 CREATE TABLE IF NOT EXISTS emergency_bot_subscribers (
+    chat_id VARCHAR(50), admin_id
     admin_id VARCHAR(50),
-    user_id VARCHAR(50),
     FOREIGN KEY (admin_id) REFERENCES admins_2fa(admin_id) ON DELETE CASCADE
 );
 """
