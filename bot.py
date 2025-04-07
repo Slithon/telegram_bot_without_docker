@@ -186,7 +186,7 @@ def check_and_update_version():
             if db_version == VERSION:
                 print("База даних актуальна. Ініціалізація пропущена.")
                 print(f"Ваша версія {db_version}")
-            elif float(db_version) + 0.1 == float(VERSION):
+            elif round(float(db_version) + 0.1, 1) == float(VERSION):
                 print(f"Оновлення бази даних з версії {db_version} до {VERSION}...")
                 cursor.execute("DROP TABLE emergency_bot_subscribers;")
                 cursor.execute(create_emergency_bot_subscribers)
