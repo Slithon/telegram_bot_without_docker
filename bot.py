@@ -1361,7 +1361,7 @@ def subscribe_emergency(message):
         bot.send_message(message.chat.id, "Ви успішно відписані від аварійної розсилки.")
     else:
         # Якщо запису немає, додаємо chat_id до таблиці (підписка)
-        execute_db("INSERT INTO emergency_bot_subscribers (chat_id, user_id) VALUES (%s, %s)",
+        execute_db("INSERT INTO emergency_bot_subscribers (chat_id, admin_id) VALUES (%s, %s)",
                    (str(message.chat.id), str(message.from_user.id)), commit=True)
 
         bot.send_message(message.chat.id, "Ви успішно підписані на аварійну розсилку.")
