@@ -57,9 +57,10 @@ EOF
 #    sudo systemctl start ${SERVICE_NAME}
 
     echo "Сервіс ${SERVICE_NAME} успішно встановлено!"
-    else
-      echo "Unit-файл ${SERVICE_FILE} вже існує. Пропускаємо створення."
-    fi
+  else
+    echo "Unit-файл ${SERVICE_FILE} вже існує. Пропускаємо створення."
+  fi
+
 elif  [ "$auto_run" = "2" ]; then
     if [  -f "${SERVICE_FILE}" ]; then
       sudo systemctl stop ${SERVICE_NAME}

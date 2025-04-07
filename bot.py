@@ -1262,7 +1262,7 @@ def verify_list_time_keys(message, admin_secret):
         markup.add(InlineKeyboardButton(f"Видалити {group_name} - {time_key}",
                                         callback_data=f"delete_time_key:{group_name}:{time_key}"))
     bot.send_message(message.chat.id, text, reply_markup=markup)
-
+    send_commands_menu(message)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_time_key:"))
 @moderator_callback_only
