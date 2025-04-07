@@ -194,6 +194,8 @@ def check_and_update_version():
                 connection.commit()
             else:
                 print("Помилка: версія бази несумісна з поточною версією коду!")
+                print(f"Ваша версія {db_version} а мінімальна {VERSION} ")
+
                 connection.close()
                 exit(1)
         else:
