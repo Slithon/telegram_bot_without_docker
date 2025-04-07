@@ -6,7 +6,7 @@ set -e
 # Інші налаштування та команди вашого скрипту...
 
 # Змінні для створення unit-файлу
-SERVICE_NAME="telegram_bot.service"
+SERVICE_NAME="hetzner_telegram_bot.service"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
 WORKING_DIR="$(pwd)"
 SCRIPT_PATH="${WORKING_DIR}/$(basename "$0")"  # Абсолютний шлях до поточного скрипту
