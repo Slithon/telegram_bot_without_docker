@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # Інші налаштування та команди вашого скрипту...
-
+auto_run=0 # якщо 0 то автозапуск вимкнено якщо 1 увімкнений 2 видалити  сервіс
 # Змінні для створення unit-файлу
 SERVICE_NAME="hetzner_telegram_bot.service"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
@@ -9,9 +9,10 @@ WORKING_DIR="$(pwd)"
 SCRIPT_PATH="${WORKING_DIR}/$(basename "$0")"  # Абсолютний шлях до поточного скрипту
 sudo chmod ugo+x $SCRIPT_PATH
 # Перевірка чи unit-файл вже існує
-if [ ! -f "${SERVICE_FILE}" ]; then
-    echo "Unit-файл ${SERVICE_FILE} не знайдено. Створюємо новий..."
-    sudo bash -c "cat > ${SERVICE_FILE}" <<EOF
+if [ "$auto_run" = "1" ]; then
+  if [ ! -f "${SERVICE_FILE}" ]; then
+      echo "Unit-файл ${SERVICE_FILE} не знайдено. Створюємо новий..."
+      sudo bash -c "cat > ${SERVICE_FILE}" <<EOF
 [Unit]
 Description=Telegram Bot Auto Start Service
 After=network.target mysql.service
@@ -26,23 +27,35 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
-echo "Перезавантаження конфігурації systemd..."
-sudo systemctl daemon-reload
+# Перезавантаження конфігурації systemd та увімкнення сервісу
+    echo "Перезавантаження конфігурації systemd..."
+    sudo systemctl daemon-reload
 
-echo "Увімкнення сервісу для автозапуску..."
-sudo systemctl enable ${SERVICE_NAME}
+    echo "Увімкнення сервісу для автозапуску..."
+    sudo systemctl enable ${SERVICE_NAME}
 
-echo "Запуск сервісу..."
-sudo systemctl start ${SERVICE_NAME}
+    echo "Запуск сервісу..."
+    sudo systemctl start ${SERVICE_NAME}
 
-echo "Сервіс ${SERVICE_NAME} успішно встановлено!"
-else
-    echo "Unit-файл ${SERVICE_FILE} вже існує. Пропускаємо створення."
+    echo "Сервіс ${SERVICE_NAME} успішно встановлено!"
+    else
+      echo "Unit-файл ${SERVICE_FILE} вже існує. Пропускаємо створення."
+    fi
+elif  [ "$auto_run" = "2" ]; then
+    if [  -f "${SERVICE_FILE}" ]; then
+      sudo systemctl stop ${SERVICE_NAME}
+      sudo systemctl disable ${SERVICE_NAME}
+      sudo rm /etc/systemd/system/${SERVICE_NAME}
+      sudo systemctl daemon-reload
+      echo "Видалення сервісу виконано успішно"
+
+    fi
 fi
 
-# Перезавантаження конфігурації systemd та увімкнення сервісу
+
 
 # ==================== Налаштування змінних ====================
+
 # Git репозиторій
 REPO_URL="https://github.com/Slithon/telegram_bot_without_docker"
 REPO_DIR="telegram_bot_without_docker"
