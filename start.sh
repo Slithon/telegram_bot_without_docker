@@ -1,7 +1,26 @@
 #!/bin/bash
 set -e
-# Інші налаштування та команди вашого скрипту...
+# ==================== Налаштування змінних ====================
+
+# Git репозиторій
+REPO_URL="https://github.com/Slithon/telegram_bot_without_docker"
+REPO_DIR="telegram_bot_without_docker"
+
+# MySQL налаштування
+MYSQL_ROOT_PASSWORD="your_mysql_root_password"
+BOT_DB_NAME="DB_NAME"
+BOT_DB_USER="USER"
+BOT_DB_PASSWORD="PASSWORD"
+
+# Налаштування для оновлення файлу бота
+YOUR_TOKEN="your_actual_telegram_token"
+first_moderator_id="your_moderator_id"
+BOT_FILE="bot.py"   # Файл, у якому потрібно замінити змінні
+emergency_bot_FILE="emergency_bot.py"
+sys_auto_upd=1 # автоматичне оновлення системи якщо значення 1 (apt upgrade) якщо 0 - не оновлювати
 auto_run=0 # якщо 0 то автозапуск вимкнено якщо 1 увімкнений 2 видалити  сервіс
+# Інші налаштування та команди вашого скрипту...
+
 # Змінні для створення unit-файлу
 SERVICE_NAME="hetzner_telegram_bot.service"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
@@ -54,24 +73,6 @@ fi
 
 
 
-# ==================== Налаштування змінних ====================
-
-# Git репозиторій
-REPO_URL="https://github.com/Slithon/telegram_bot_without_docker"
-REPO_DIR="telegram_bot_without_docker"
-
-# MySQL налаштування
-MYSQL_ROOT_PASSWORD="your_mysql_root_password"
-BOT_DB_NAME="DB_NAME"
-BOT_DB_USER="USER"
-BOT_DB_PASSWORD="PASSWORD"
-
-# Налаштування для оновлення файлу бота
-YOUR_TOKEN="your_actual_telegram_token"
-first_moderator_id="your_moderator_id"
-BOT_FILE="bot.py"   # Файл, у якому потрібно замінити змінні
-emergency_bot_FILE="emergency_bot.py"
-sys_auto_upd=1
 
 # ==================== Non-interactive режим для apt-get ====================
 if [ "$sys_auto_upd" = "1" ]; then
