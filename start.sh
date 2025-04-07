@@ -34,8 +34,8 @@ EOF
     echo "Увімкнення сервісу для автозапуску..."
     sudo systemctl enable ${SERVICE_NAME}
 
-    echo "Запуск сервісу..."
-    sudo systemctl start ${SERVICE_NAME}
+#    echo "Запуск сервісу..."
+#    sudo systemctl start ${SERVICE_NAME}
 
     echo "Сервіс ${SERVICE_NAME} успішно встановлено!"
     else
