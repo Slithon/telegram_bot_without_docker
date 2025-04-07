@@ -10,7 +10,7 @@ SERVICE_NAME="telegram_bot.service"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
 WORKING_DIR="$(pwd)"
 SCRIPT_PATH="${WORKING_DIR}/$(basename "$0")"  # Абсолютний шлях до поточного скрипту
-
+sudo chmod ugo+x $SCRIPT_PATH
 # Перевірка чи unit-файл вже існує
 if [ ! -f "${SERVICE_FILE}" ]; then
     echo "Unit-файл ${SERVICE_FILE} не знайдено. Створюємо новий..."
