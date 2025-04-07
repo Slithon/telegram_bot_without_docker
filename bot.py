@@ -24,7 +24,7 @@ DB_USER = "USER"
 DB_PASSWORD = "PASSWORD"
 DB_NAME = "DB_NAME"
 # ==================== Версія коду ====================
-VERSION = "1."
+VERSION = "1.2"
 
 
 # ==================== Декоратори для перевірки реєстрації та ролі ====================
@@ -185,6 +185,7 @@ def check_and_update_version():
             db_version = row[0]
             if db_version == VERSION:
                 print("База даних актуальна. Ініціалізація пропущена.")
+                print(f"Ваша версія {VERSION}")
             elif float(db_version) + 0.1 == float(VERSION):
                 print(f"Оновлення бази даних з версії {db_version} до {VERSION}...")
                 cursor.execute("DROP TABLE emergency_bot_subscribers;")
